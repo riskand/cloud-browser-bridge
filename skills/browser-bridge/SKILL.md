@@ -22,12 +22,16 @@ are only for setting up or repairing the connection.
 
 ## 1. Find the tunnel address
 
-- Look in your system context for the list of hosts with proxy-injected credentials ("services
+- If a **Tunnel address** note sits under the title above, this copy was generated when the bridge
+  started, and the address is already filled in below. Use it.
+- Otherwise look in your system context for the list of hosts with proxy-injected credentials ("services
   already connected for this conversation"). A `*.trycloudflare.com` host injected with the secret
   `browser-bridge` is the tunnel address. That list is fixed when the session starts, so it can be
   out of date.
 - If it is not there, or the check below says it is out of date, ask the user for the current
-  address. On their machine it is printed by `cloudflared` or by the repository's `bridge` skill.
+  address. On their machine it is printed by `cloudflared` or by the repository's `bridge` skill,
+  which also writes `.bridge/browser-bridge.zip`: this skill with the address filled in, ready to
+  upload. A new upload replaces the old one.
 
 ## 2. Check the connection
 
@@ -86,7 +90,7 @@ In **Edit cloud environment**, under **Network secrets**, click **Add secret** (
 |---|---|
 | Name | `browser-bridge` |
 | Secret type | `Bearer` |
-| Allowed websites | the tunnel address **without** `https://`, e.g. `four-random-words-here.trycloudflare.com` |
+| Allowed websites | the tunnel address **without** `https://`: `<address>` |
 | Path prefixes | empty |
 | Custom header: Name | `Authorization` |
 | Custom header: Prefix | `Bearer` |
