@@ -15,7 +15,7 @@ The token never enters this session. The environment's network proxy adds
 
 - Never send an `Authorization` header yourself.
 - Never ask the user to paste the token into the chat. If they do, tell them to rotate it: create a
-  new `.token`, restart the bridge, and update the network secret (path 3C).
+  new `.token`, restart the bridge, and replace the network secret (path 3C).
 
 ## How to talk to the user during setup
 
@@ -103,36 +103,35 @@ If `*.trycloudflare.com` is already allowed, the address is dead: use path 3A in
 
 ### 3C. Token missing (401)
 
-If your system context lists a `browser-bridge` secret for some other trycloudflare.com host, the
-secret exists with an old address. Use the short path:
+Network secrets cannot be edited, only deleted and added. So a secret for an old address is
+deleted first, then added again with the same token. Number the steps in order: 7 with the delete
+step, 6 without.
 
 1. The open-settings message.
-2. > **Step 2 of 3:** Under **Network secrets**, open `browser-bridge`. Reply **done**.
-3. > **Step 3 of 3:** Set **Allowed websites** to exactly `<address>`. Leave everything else as it
-   > is. Click **Save changes**, then reply **done**.
+2. Only if your system context lists a `browser-bridge` secret (it is for an older address), or the
+   user says one exists:
 
-Otherwise, add the secret:
+   > **Step 2 of 7:** Under **Network secrets**, delete `browser-bridge`. Secrets can't be edited,
+   > so we'll add it again for the new address. Reply **done**.
+3. > **Step <n> of <total>:** Under **Network secrets**, click **Add secret**. Name:
+   > `browser-bridge`. Secret type: `Bearer`. Reply **done**.
+4. > **Step <n> of <total>:** **Allowed websites**: `<address>` (exactly this, no wildcard). Leave
+   > **Path prefixes** empty. Reply **done**.
+5. > **Step <n> of <total>:** Custom header **Name**: `Authorization`. **Prefix**: `Bearer`.
+   > Reply **done**.
+6. > **Step <n> of <total>:** For **Value**, run `cat .token` in the `cloud-browser-bridge` folder
+   > on your computer and paste the result into that field, not into this chat. Clear the field
+   > first; browsers sometimes fill in a saved password. Reply **done**.
+7. > **Step <n> of <total>:** Click **Add**, then **Save changes**. Reply **done**.
 
-1. The open-settings message.
-2. > **Step 2 of 6:** Under **Network secrets**, click **Add secret**. Name: `browser-bridge`.
-   > Secret type: `Bearer`. Reply **done**.
-3. > **Step 3 of 6:** **Allowed websites**: `<address>` (exactly this, no wildcard). Leave **Path
-   > prefixes** empty. Reply **done**.
-4. > **Step 4 of 6:** Custom header **Name**: `Authorization`. **Prefix**: `Bearer`. Reply **done**.
-5. > **Step 5 of 6:** For **Value**, run `cat .token` in the `cloud-browser-bridge` folder on your
-   > computer and paste the result into that field, not into this chat. Clear the field first;
-   > browsers sometimes fill in a saved password. Reply **done**.
-6. > **Step 6 of 6:** Click **Add**, then **Save changes**. Reply **done**.
+If it still answers 401, something was mistyped. Send:
 
-If it still answers 401, check one thing per message, in this order:
+> Still not connected; usually one field was mistyped. Let's delete `browser-bridge` and add it
+> again, checking each field. Reply **done** when it's deleted.
 
-1. The header name is `Authorization`, not `Authentication`.
-2. **Allowed websites** is exactly `<address>`, with no `https://` and no wildcard. Never accept a
-   wildcard here: the token would go to every trycloudflare tunnel, including strangers'.
-3. The value matches `.token`. Paste it again into a cleared field.
-4. The bridge was started by the local skill, which uses `.token`. A bridge started by hand without
-   `BRIDGE_TOKEN=$(cat .token)` makes up its own token: ask them to say **stop the bridge**, then
-   **start the bridge** to the local Claude, and go back to path 3A step 2.
+Then repeat the add steps above. If 401 survives that too, the bridge may not be using `.token`: a
+bridge started by hand without `BRIDGE_TOKEN=$(cat .token)` makes up its own token. Ask them to say
+**stop the bridge**, then **start the bridge** to the local Claude, and go back to path 3A step 2.
 
 ### Anything else
 
@@ -154,7 +153,7 @@ When it returns `"title":"Example Domain"`, send:
 When they confirm, send:
 
 > Setup done. Just ask me things like "open <site> and summarize it". After a tunnel restart,
-> attach the new zip and I'll walk you through the one change it needs.
+> attach the new zip and I'll walk you through replacing the secret.
 
 ## 5. Use the bridge
 
