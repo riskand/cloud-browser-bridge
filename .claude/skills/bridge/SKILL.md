@@ -33,16 +33,17 @@ Both processes keep running after Claude Code exits. Logs and pid files are in `
    - If `cloudflared` is missing: on macOS with Homebrew, offer to run `brew install cloudflared`.
      Otherwise installing it needs `sudo`, so give the user the commands from README step A2 to run
      in their own terminal.
-3. Report the tunnel address (new on every start) and hand over the cloud side:
-   - `.bridge/browser-bridge.zip` holds the cloud-session instructions with this address filled in:
-     everything needed to connect except the token. It is attached to a cloud session, not
-     installed as a skill.
-   - The token stays with the user. They keep it in the `browser-bridge` network secret, copying the
-     value from `.token` in their own terminal. With a new address, they only update the secret's
-     **Allowed websites** to it; the value stays the same.
-   - In the cloud session that should use the browser, they attach the zip to their message and
-     prompt *set up browser with the attached zip*. The agent checks the connection, walks them through any missing
-     setting, and confirms with a test page. They attach it again in each new session.
+3. Reply with exactly this, filling in the address and the zip's full path, and nothing more:
+
+   > Bridge running at `<tunnel address>`.
+   >
+   > Next, in the cloud session: attach `<full path of .bridge/browser-bridge.zip>` and say
+   > **set up browser with the attached zip**. It walks you through the rest one step at a time.
+
+   Background, only if the user asks: the zip holds the cloud-session instructions with this address
+   filled in, everything needed to connect except the token. It is attached to each cloud session,
+   not installed as a skill. The token stays in the user's `browser-bridge` network secret; after a
+   restart only the secret's **Allowed websites** changes, and the cloud session guides that.
 
 ## Rules
 
