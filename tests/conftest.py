@@ -49,6 +49,7 @@ def make_client(tmp_path: Path) -> Iterator[Callable[..., TestClient]]:
         defaults = {
             "token": TOKEN,
             "profile_dir": tmp_path / f"profile-{len(clients)}",
+            "browser": "chromium",
             "headless": True,
             "allow_private_networks": True,
             "action_timeout_ms": 1_000,

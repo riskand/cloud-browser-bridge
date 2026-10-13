@@ -7,7 +7,7 @@ import sys
 import uvicorn
 
 from .api import create_app
-from .config import Settings
+from .config import Settings, browser_from_env
 
 HOST = "127.0.0.1"
 
@@ -22,6 +22,11 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     if args.command == "install-browser":
+        browser = browser_from_env()
+        if browser != "chromium":
+            print(f"Using the {browser} installed on this machine; nothing to download.")
+            print("Set BRIDGE_BROWSER=chromium to use Playwright's own Chromium instead.")
+            return
         sys.exit(subprocess.call([sys.executable, "-m", "playwright", "install", "chromium"]))
 
     try:

@@ -1,11 +1,13 @@
 """The browser and its per-session tabs."""
 
 import asyncio
+import contextlib
 import re
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from playwright.async_api import BrowserContext, Page, async_playwright
+from playwright.async_api import Error as PlaywrightError
 
 from .config import Settings
 from .network_guard import PrivateNetworkGuard
@@ -75,9 +77,16 @@ class Tabs:
 async def launch(settings: Settings) -> AsyncIterator[Tabs]:
     async with async_playwright() as playwright:
         context = await playwright.chromium.launch_persistent_context(
-            str(settings.profile_dir), headless=settings.headless
+            str(settings.profile_dir),
+            channel=settings.channel,
+            headless=settings.headless,
+            # A visible window starts maximized, so pages get the whole screen, then steps aside.
+            args=[] if settings.headless else ["--start-maximized"],
+            no_viewport=not settings.headless,
         )
         try:
+            if not settings.headless:
+                await _minimize(context)
             context.set_default_timeout(settings.action_timeout_ms)
             context.set_default_navigation_timeout(settings.navigation_timeout_ms)
             if not settings.allow_private_networks:
@@ -85,3 +94,18 @@ async def launch(settings: Settings) -> AsyncIterator[Tabs]:
             yield Tabs(context, settings.max_sessions)
         finally:
             await context.close()
+
+
+async def _minimize(context: BrowserContext) -> None:
+    """Send the window to the taskbar; restoring it brings it back maximized.
+
+    Best effort: some window managers ignore it, and the bridge works either way.
+    """
+    with contextlib.suppress(PlaywrightError):
+        cdp = await context.new_cdp_session(context.pages[0])
+        window = await cdp.send("Browser.getWindowForTarget")
+        await cdp.send(
+            "Browser.setWindowBounds",
+            {"windowId": window["windowId"], "bounds": {"windowState": "minimized"}},
+        )
+        await cdp.detach()
