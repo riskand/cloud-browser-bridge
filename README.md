@@ -106,6 +106,18 @@ The address changes every time you restart `cloudflared`. See
 Both settings live in your cloud environment and apply to every session that uses it, including
 sessions already running.
 
+> **Let Claude guide you.** [`skills/browser-bridge`](skills/browser-bridge/SKILL.md) is a skill for
+> the cloud session. It checks the connection, walks you through B2 and B3 one step at a time based
+> on the error it sees, and then teaches the agent the API, so B4 is not needed. Add it in either
+> of two ways:
+>
+> - Copy the `skills/browser-bridge` folder into `.claude/skills/` of the repository you work on in
+>   the cloud. Every session of that repository then has it.
+> - Zip it (`cd skills && zip -r ~/browser-bridge.zip browser-bridge`) and upload the zip as a
+>   skill in your claude.ai settings, so it follows you to every session.
+>
+> Then ask the agent to *set up the browser bridge*.
+
 **B1. Open the environment settings**
 
 On the session's page at claude.ai/code, click the small arrow next to the repository name at the top
