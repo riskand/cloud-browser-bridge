@@ -3,7 +3,7 @@
 Let a cloud-hosted coding agent drive a browser **on your own machine**, over plain HTTPS.
 
 ```
-cloud agent ──HTTPS + bearer token──▶ tunnel (e.g. Cloudflare) ──▶ 127.0.0.1:8765 bridge ──▶ Chromium window
+cloud agent ──HTTPS + bearer token──▶ tunnel (e.g. Cloudflare) ──▶ 127.0.0.1:8765 bridge ──▶ Chrome window
 ```
 
 Cloud agent sandboxes (such as Claude Code cloud sessions) usually reach the internet through an
@@ -12,10 +12,11 @@ That rules out attaching Playwright or Puppeteer to a remote Chrome over the Dev
 bridge runs next to the browser and exposes a small HTTP API instead, which works through such
 proxies.
 
-- **Isolated browser.** Playwright's own Chromium with its own profile directory. It shares nothing
-  with the browsers already on your machine: no cookies, sign-ins, extensions or history.
-- **Visible.** The window shows on your screen by default, so you can watch, sign in, or solve a
-  CAPTCHA yourself, then let the agent carry on.
+- **Isolated browser.** The Google Chrome already on your machine, run with its own profile
+  directory. It shares nothing with your everyday Chrome: no cookies, sign-ins, extensions or
+  history. Set `BRIDGE_BROWSER=chromium` to use Playwright's own Chromium instead.
+- **Out of your way, one click away.** The window opens maximized, then minimizes to your taskbar.
+  Restore it to watch, sign in, or solve a CAPTCHA yourself, then let the agent carry on.
 - **Narrow API.** Open pages, read text and links, click, fill, press keys, go back, and take
   screenshots. No script execution, no file access.
 - **Several agents at once.** Each caller session gets its own tab. Sign-ins are shared, pages are not.
@@ -32,7 +33,7 @@ There are three parts: **A** runs the bridge on your machine, **B** lets your cl
 
 ### A. On your machine
 
-You need Python 3.10+ and about 300 MB of disk space for the browser.
+You need Python 3.10+ and Google Chrome.
 
 > **With Claude Code on this machine**, you can skip the manual steps below: after `git clone`, run
 > `claude` in the repository and ask it to *start the bridge* (or type `/bridge`). The project skill
@@ -50,9 +51,10 @@ pip install -e .
 browser-bridge install-browser
 ```
 
-`install-browser` downloads Playwright's own Chromium. It does not touch a browser you already have.
-On Linux, if Chromium later fails to start because of missing system libraries, run
-`sudo .venv/bin/python -m playwright install-deps chromium`.
+With Chrome, `install-browser` has nothing to download. With `BRIDGE_BROWSER=chromium` it
+downloads Playwright's own Chromium (about 300 MB), and on Linux, if Chromium then fails to start
+because of missing system libraries, run `sudo .venv/bin/python -m playwright install-deps chromium`.
+Neither touches your everyday browser or its profile.
 
 **A2. Install cloudflared (once)**
 
@@ -83,7 +85,7 @@ cd cloud-browser-bridge && . .venv/bin/activate
 BRIDGE_TOKEN=$(cat .token) browser-bridge
 ```
 
-A Chromium window opens on `about:blank`. Leave this terminal running.
+A Chrome window opens maximized, then minimizes to your taskbar. Leave this terminal running.
 
 **A5. Start the tunnel (every time)**
 
@@ -197,8 +199,8 @@ Every `cloudflared` restart gives a new address. Then:
 
 1. In **Edit cloud environment → Network secrets**, edit `browser-bridge` and replace the address in
    **Allowed websites**.
-2. Give the agent the new address, or attach the new `.bridge/browser-bridge.zip` to the session
-   instead.
+2. Give the agent the new address, or attach the new `.bridge/browser-bridge.zip` to the session and
+   say *reset browser with the attached zip*.
 
 The allowlist from B2 already covers it. For an address that never changes, use a
 [named tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
@@ -207,7 +209,7 @@ on a domain you own.
 ### Stop
 
 Press `Ctrl+C` in both terminals. The tunnel address stops working immediately. To also wipe
-everything the bridge's browser stored, including sign-ins: `rm -rf ~/.browser-bridge-profile`.
+everything the bridge's browser stored, including sign-ins: `rm -rf ~/.browser-bridge-*-profile`.
 
 ### Other cloud agents
 
@@ -269,7 +271,8 @@ Requests within one session run one at a time. Different sessions run concurrent
 |---|---|---|
 | `BRIDGE_TOKEN` | random, printed at start | Bearer token, at least 24 characters |
 | `BRIDGE_PORT` | `8765` | Always bound to `127.0.0.1` |
-| `BRIDGE_PROFILE_DIR` | `~/.browser-bridge-profile` | Browser profile (sign-ins persist here) |
+| `BRIDGE_BROWSER` | `chrome` | `chrome` for the installed Google Chrome, `chromium` for Playwright's own (download it with `install-browser`), or another Playwright channel such as `msedge` |
+| `BRIDGE_PROFILE_DIR` | `~/.browser-bridge-<browser>-profile` | Browser profile (sign-ins persist here). One per browser, since Chrome and Chromium can't share one across versions |
 | `BRIDGE_HEADLESS` | off | `1` to run without a window |
 | `BRIDGE_ALLOW_PRIVATE_NETWORKS` | off | `1` to let the browser reach loopback/LAN addresses, e.g. to test a local dev server |
 | `BRIDGE_MAX_SESSIONS` | `8` | Maximum open tabs, including `default` |
@@ -290,7 +293,7 @@ Read this before exposing the bridge.
   connections are not covered. Leave `BRIDGE_ALLOW_PRIVATE_NETWORKS` off unless you need it.
 - **Run it only while you use it.** Stop both the bridge and the tunnel with `Ctrl+C`; the tunnel
   URL then stops working.
-- To wipe everything the browser stored: `rm -rf ~/.browser-bridge-profile`.
+- To wipe everything the browser stored: `rm -rf ~/.browser-bridge-*-profile`.
 
 Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
 
@@ -319,12 +322,13 @@ Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
 
 ```bash
 pip install -e ".[dev]"
-browser-bridge install-browser
+BRIDGE_BROWSER=chromium browser-bridge install-browser
 ruff check . && ruff format --check .
 pytest
 ```
 
-The tests start real headless Chromium instances against a local web server.
+The tests start real headless Chromium instances (Playwright's own, so CI needs no Chrome) against
+a local web server.
 
 ## Contributing
 

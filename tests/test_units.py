@@ -37,6 +37,18 @@ def test_rejects_a_short_token() -> None:
         Settings.from_env({"BRIDGE_TOKEN": "short"})
 
 
+def test_defaults_to_chrome_with_its_own_profile() -> None:
+    settings = Settings.from_env({})
+    assert (settings.browser, settings.channel) == ("chrome", "chrome")
+    assert settings.profile_dir.name == ".browser-bridge-chrome-profile"
+
+
+def test_chromium_means_playwrights_own_build() -> None:
+    settings = Settings.from_env({"BRIDGE_BROWSER": " Chromium "})
+    assert (settings.browser, settings.channel) == ("chromium", None)
+    assert settings.profile_dir.name == ".browser-bridge-chromium-profile"
+
+
 def test_reads_settings_from_env(tmp_path) -> None:
     settings = Settings.from_env(
         {
