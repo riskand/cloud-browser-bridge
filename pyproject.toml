@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cloud-browser-bridge"
+version = "0.1.0"
+description = "Drive an isolated browser on your own machine from a cloud agent, over plain HTTPS."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "playwright>=1.49",
+]
+
+[project.optional-dependencies]
+dev = [
+    "httpx>=0.27",
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+browser-bridge = "browser_bridge.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/browser_bridge"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
