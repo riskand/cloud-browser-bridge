@@ -4,7 +4,9 @@ Standard library only, so it runs before the virtual environment exists:
 
     python3 .claude/skills/bridge/scripts/bridge.py setup|start|status|stop
 
-Both processes run detached from the caller and outlive it. Pid files and logs go to `.bridge/`.
+Both processes run detached from the caller and outlive it. Pid files and logs go to `.bridge/`,
+and so does `browser-bridge.zip`: the cloud-session skill with the current tunnel address filled
+in, rewritten on every start and removed on stop. It never contains the token.
 """
 
 from __future__ import annotations  # an older system Python reaches pip's version error
@@ -21,8 +23,10 @@ import sys
 import time
 import urllib.error
 import urllib.request
+import zipfile
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -30,6 +34,8 @@ BIN = ROOT / ".venv" / "bin"
 BRIDGE_EXE = BIN / "browser-bridge"
 TOKEN_FILE = ROOT / ".token"
 STATE_DIR = ROOT / ".bridge"
+CLOUD_SKILL = ROOT / "skills" / "browser-bridge" / "SKILL.md"
+CLOUD_SKILL_ZIP = STATE_DIR / "browser-bridge.zip"
 LOCAL_URL = f"http://127.0.0.1:{os.environ.get('BRIDGE_PORT', '8765')}"
 TUNNEL_ADDRESS = re.compile(r"https://[a-z0-9-]+\.trycloudflare\.com")
 START_TIMEOUT_S = 60
@@ -134,6 +140,21 @@ def _tunnel_address() -> str | None:
     return match.group() if match else None
 
 
+def _write_cloud_skill(address: str) -> None:
+    """Zip the cloud-session skill with `address` filled in, ready to upload."""
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    note = (
+        f"\n> **Tunnel address: `{address}`**, written when the bridge started ({stamp}).\n"
+        "> It is filled in below and stops working when the tunnel restarts.\n"
+    )
+    text = CLOUD_SKILL.read_text().replace("<address>", address.removeprefix("https://"))
+    lines = text.splitlines(keepends=True)
+    title = next(i for i, line in enumerate(lines) if line.startswith("# "))
+    lines.insert(title + 1, note)
+    with zipfile.ZipFile(CLOUD_SKILL_ZIP, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("browser-bridge/SKILL.md", "".join(lines))
+
+
 def setup() -> None:
     """A1 (install the bridge and its Chromium), A2 (check cloudflared), A3 (create .token)."""
     if not BRIDGE_EXE.exists():
@@ -165,6 +186,8 @@ def start() -> None:
         TUNNEL.start(
             ["cloudflared", "tunnel", "--url", LOCAL_URL], lambda: _tunnel_address() is not None
         )
+    if address := _tunnel_address():
+        _write_cloud_skill(address)
     status()
 
 
@@ -173,11 +196,13 @@ def status() -> None:
         pid = service.pid()
         print(f"{service.name}: {f'running (pid {pid})' if pid else 'stopped'}")
     print(f"tunnel address: {_tunnel_address() or '-'}")
+    print(f"cloud skill: {CLOUD_SKILL_ZIP if CLOUD_SKILL_ZIP.exists() else '-'}")
 
 
 def stop() -> None:
     TUNNEL.stop()
     BRIDGE.stop()
+    CLOUD_SKILL_ZIP.unlink(missing_ok=True)
     status()
 
 

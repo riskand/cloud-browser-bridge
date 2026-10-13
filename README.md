@@ -113,8 +113,10 @@ sessions already running.
 >
 > - Copy the `skills/browser-bridge` folder into `.claude/skills/` of the repository you work on in
 >   the cloud. Every session of that repository then has it.
-> - Zip it (`cd skills && zip -r ~/browser-bridge.zip browser-bridge`) and upload the zip as a
->   skill in your claude.ai settings, so it follows you to every session.
+> - Upload `.bridge/browser-bridge.zip` as a skill in your claude.ai settings, so it follows you to
+>   every session. The local `bridge` skill writes it on every start with your current tunnel address
+>   filled in, so replace the uploaded copy after each restart. It never contains the token: that
+>   stays in the network secret (B3).
 >
 > Then ask the agent to *set up the browser bridge*.
 
