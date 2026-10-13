@@ -1,6 +1,6 @@
 ---
 name: browser-bridge
-description: Use a browser on the user's own machine through cloud-browser-bridge, a small HTTPS API reached through a Cloudflare tunnel. Use when the user asks to set up, connect to or check the browser bridge (for example "set up browser" or "set up the browser bridge" right after uploading this skill), or to browse, open or read a web page, click, fill in a form or take a screenshot "in my browser" or "with the bridge", or when a page needs a real browser (JavaScript, a sign-in). Also use when requests to a trycloudflare.com address fail with 401, 403, 502 or 530.
+description: Use a browser on the user's own machine through cloud-browser-bridge, a small HTTPS API reached through a Cloudflare tunnel. Use when the user asks to set up, connect to or check the browser bridge (for example "set up browser" with this file attached), or to browse, open or read a web page, click, fill in a form or take a screenshot "in my browser" or "with the bridge", or when a page needs a real browser (JavaScript, a sign-in). Also use when requests to a trycloudflare.com address fail with 401, 403, 502 or 530.
 ---
 
 # Browser bridge (cloud session)
@@ -33,8 +33,8 @@ Always start with sections 1 and 2. Then:
   out of date.
 - If it is not there, or the check below says it is out of date, ask the user for the current
   address. On their machine it is printed by `cloudflared` or by the repository's `bridge` skill,
-  which also writes `.bridge/browser-bridge.zip`: this skill with the address filled in, ready to
-  upload. A new upload replaces the old one.
+  which also writes `.bridge/browser-bridge.zip`: these instructions with the address filled in,
+  for the user to attach to the session.
 
 ## 2. Check the connection
 
@@ -120,7 +120,7 @@ curl -sS -H 'X-Bridge-Session: <name>' -H 'Content-Type: application/json' \
 Expect `"title":"Example Domain"`. Ask the user whether a tab with example.com appeared in the bridge
 window. Setup is done. Tell them so, and that from now on they can simply ask for browsing tasks, such
 as "open <site> in my browser and summarize it". After a tunnel restart they repeat two things:
-upload the new zip that the bridge's `start` writes, and update **Allowed websites** in the secret.
+attach the new zip that the bridge's `start` writes, and update **Allowed websites** in the secret.
 
 ## 5. Use the bridge
 

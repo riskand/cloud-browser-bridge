@@ -17,7 +17,7 @@ python3 .claude/skills/bridge/scripts/bridge.py <command>
 | Command | What it does |
 |---|---|
 | `setup` | A1: creates `.venv`, installs the bridge and Playwright's Chromium (about 300 MB the first time). A3: creates `.token` if missing. A2: checks that `cloudflared` is installed. Safe to re-run. |
-| `start` | A4 and A5: starts the bridge and the tunnel in the background, waits until both are up and prints the tunnel address. Writes `.bridge/browser-bridge.zip`, the cloud-session skill with that address filled in. Leaves anything already running alone. |
+| `start` | A4 and A5: starts the bridge and the tunnel in the background, waits until both are up and prints the tunnel address. Writes `.bridge/browser-bridge.zip`, the cloud-session instructions with that address filled in. Leaves anything already running alone. |
 | `status` | Shows which of the two is running and the current tunnel address. |
 | `stop` | Stops the tunnel, then the bridge, and deletes the zip. |
 
@@ -34,15 +34,15 @@ Both processes keep running after Claude Code exits. Logs and pid files are in `
      Otherwise installing it needs `sudo`, so give the user the commands from README step A2 to run
      in their own terminal.
 3. Report the tunnel address (new on every start) and hand over the cloud side:
-   - Upload `.bridge/browser-bridge.zip` as a skill in claude.ai; it replaces the old upload. It is
-     the cloud-session skill with this address filled in and holds everything needed to connect
-     except the token.
+   - `.bridge/browser-bridge.zip` holds the cloud-session instructions with this address filled in:
+     everything needed to connect except the token. It is attached to a cloud session, not
+     installed as a skill.
    - The token stays with the user. They keep it in the `browser-bridge` network secret, copying the
      value from `.token` in their own terminal. With a new address, they only update the secret's
      **Allowed websites** to it; the value stays the same.
-   - Then they open a **new** cloud session (a session loads skills when it starts) and prompt
-     *set up browser*. The skill checks the connection, walks them through any missing
-     setting, and confirms with a test page.
+   - In the cloud session that should use the browser, they attach the zip to their message and
+     prompt *set up browser with the attached zip*. The agent checks the connection, walks them through any missing
+     setting, and confirms with a test page. They attach it again in each new session.
 
 ## Rules
 
