@@ -1,6 +1,6 @@
 ---
 name: browser-bridge
-description: Use a browser on the user's own machine through cloud-browser-bridge, a small HTTPS API reached through a Cloudflare tunnel. Use when the user asks to set up, connect to or check the browser bridge (for example "set up the browser bridge" right after uploading this skill), or to browse, open or read a web page, click, fill in a form or take a screenshot "in my browser" or "with the bridge", or when a page needs a real browser (JavaScript, a sign-in). Also use when requests to a trycloudflare.com address fail with 401, 403, 502 or 530.
+description: Use a browser on the user's own machine through cloud-browser-bridge, a small HTTPS API reached through a Cloudflare tunnel. Use when the user asks to set up, connect to or check the browser bridge (for example "set up browser" or "set up the browser bridge" right after uploading this skill), or to browse, open or read a web page, click, fill in a form or take a screenshot "in my browser" or "with the bridge", or when a page needs a real browser (JavaScript, a sign-in). Also use when requests to a trycloudflare.com address fail with 401, 403, 502 or 530.
 ---
 
 # Browser bridge (cloud session)

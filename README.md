@@ -118,7 +118,7 @@ sessions already running.
 >   filled in, so upload it again after each restart; the new upload replaces the old one. It never
 >   contains the token: that stays in the network secret (B3).
 >
-> Then open a new cloud session and prompt *set up the browser bridge*. It checks the connection,
+> Then open a new cloud session and prompt *set up browser*. It checks the connection,
 > walks you through any missing setting, and confirms with a test page.
 
 **B1. Open the environment settings**
