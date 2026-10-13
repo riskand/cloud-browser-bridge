@@ -31,7 +31,7 @@ are only for setting up or repairing the connection.
 - If it is not there, or the check below says it is out of date, ask the user for the current
   address. On their machine it is printed by `cloudflared` or by the repository's `bridge` skill,
   which also writes `.bridge/browser-bridge.zip`: this skill with the address filled in, ready to
-  upload in place of the old copy.
+  upload. A new upload replaces the old one.
 
 ## 2. Check the connection
 

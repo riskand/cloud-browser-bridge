@@ -34,7 +34,7 @@ Both processes keep running after Claude Code exits. Logs and pid files are in `
      Otherwise installing it needs `sudo`, so give the user the commands from README step A2 to run
      in their own terminal.
 3. Report the tunnel address (new on every start) and hand over the cloud side:
-   - Upload `.bridge/browser-bridge.zip` as a skill in claude.ai, replacing the previous copy. It is
+   - Upload `.bridge/browser-bridge.zip` as a skill in claude.ai; it replaces the old upload. It is
      the cloud-session skill with this address filled in and holds everything needed to connect
      except the token.
    - The token stays with the user. They keep it in the `browser-bridge` network secret, copying the

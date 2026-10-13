@@ -115,8 +115,8 @@ sessions already running.
 >   the cloud. Every session of that repository then has it.
 > - Upload `.bridge/browser-bridge.zip` as a skill in your claude.ai settings, so it follows you to
 >   every session. The local `bridge` skill writes it on every start with your current tunnel address
->   filled in, so replace the uploaded copy after each restart. It never contains the token: that
->   stays in the network secret (B3).
+>   filled in, so upload it again after each restart; the new upload replaces the old one. It never
+>   contains the token: that stays in the network secret (B3).
 >
 > Then ask the agent to *set up the browser bridge*.
 
@@ -200,7 +200,8 @@ Every `cloudflared` restart gives a new address. Then:
 
 1. In **Edit cloud environment → Network secrets**, edit `browser-bridge` and replace the address in
    **Allowed websites**.
-2. Give the agent the new address.
+2. Give the agent the new address. If you use the uploaded skill, upload the new
+   `.bridge/browser-bridge.zip` instead; it replaces the old one.
 
 The allowlist from B2 already covers it. For an address that never changes, use a
 [named tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
