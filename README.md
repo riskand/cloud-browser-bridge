@@ -24,86 +24,192 @@ proxies.
 
 > Independent open-source project. Not affiliated with or endorsed by Anthropic or Cloudflare.
 
-## Quick start
+## Setup
 
-### 1. Install (on the machine whose browser you want to use)
+There are three parts: **A** runs the bridge on your machine, **B** lets your cloud agent reach it,
+**C** checks that it works. Part B is written for Claude Code cloud sessions;
+[other agents](#other-cloud-agents) follow at the end.
 
-Python 3.10+ is required.
+### A. On your machine
+
+You need Python 3.10+ and about 300 MB of disk space for the browser.
+
+**A1. Install the bridge (once)**
 
 ```bash
 git clone https://github.com/riskand/cloud-browser-bridge.git
 cd cloud-browser-bridge
 python3 -m venv .venv && . .venv/bin/activate
 pip install -e .
-browser-bridge install-browser          # downloads Playwright's Chromium (~150 MB)
+browser-bridge install-browser
 ```
 
-On Linux, if Chromium fails to start because of missing system libraries, run
+`install-browser` downloads Playwright's own Chromium. It does not touch a browser you already have.
+On Linux, if Chromium later fails to start because of missing system libraries, run
 `sudo .venv/bin/python -m playwright install-deps chromium`.
 
-Also install [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/)
-(`brew install cloudflared` on macOS, or the `.deb`/`.rpm` from Cloudflare's releases on Linux).
-Any HTTPS tunnel works; this guide uses Cloudflare's free quick tunnels.
+**A2. Install cloudflared (once)**
 
-### 2. Create a token (once)
+Debian or Ubuntu:
+
+```bash
+curl -fsSLo /tmp/cloudflared.deb \
+  https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i /tmp/cloudflared.deb
+```
+
+macOS: `brew install cloudflared`. Other systems: see
+[Cloudflare's downloads page](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/).
+Check with `cloudflared --version`.
+
+**A3. Create a token (once)**
 
 ```bash
 python3 -c "import secrets; print(secrets.token_urlsafe(32))" > .token && chmod 600 .token
 ```
 
-`.token` is git-ignored. Tokens shorter than 24 characters are rejected.
+This is the password to your bridge. `.token` is git-ignored. Never paste it into a chat.
 
-### 3. Run
+**A4. Start the bridge (every time)**
 
 ```bash
-# Terminal 1: the bridge. A Chromium window opens.
+cd cloud-browser-bridge && . .venv/bin/activate
 BRIDGE_TOKEN=$(cat .token) browser-bridge
+```
 
-# Terminal 2: the tunnel. Note the https://<random>.trycloudflare.com URL it prints.
+A Chromium window opens on `about:blank`. Leave this terminal running.
+
+**A5. Start the tunnel (every time)**
+
+In a second terminal:
+
+```bash
 cloudflared tunnel --url http://127.0.0.1:8765
 ```
 
-Check the full path from anywhere:
+After a few seconds it prints a box containing your address, for example
+`https://beta-marco-queue-flying.trycloudflare.com`. Copy it; Part B calls it **your tunnel
+address**. Leave this terminal running too. Warnings about `ICMP proxy` or `ping_group_range` are
+harmless.
 
-```bash
-curl -s -H "Authorization: Bearer $(cat .token)" https://<random>.trycloudflare.com/sessions
-```
+The address changes every time you restart `cloudflared`. See
+[When the tunnel address changes](#when-the-tunnel-address-changes).
 
-### 4. Configure the cloud agent's environment
+### B. In Claude Code (cloud session)
 
-Give the agent two environment variables and allow the tunnel's domain:
+Both settings live in your cloud environment and apply to every session that uses it, including
+sessions already running.
 
-| Setting | Value |
-|---|---|
-| `BRIDGE_URL` | `https://<random>.trycloudflare.com` |
-| `BRIDGE_TOKEN` | contents of `.token` |
-| Network allowlist | `<random>.trycloudflare.com` |
+**B1. Open the environment settings**
 
-Put the token in the environment's secret or variable settings, never in a chat or a committed file.
+On the session's page at claude.ai/code, click the small arrow next to the repository name at the top
+left (or the grey label showing your environment name, such as `Default · your-repo`), then choose
+**Edit cloud environment**.
 
-For **Claude Code cloud sessions**: open the environment menu in the session's title bar, choose
-*Edit*, add both variables, and under *Network access* choose *Custom* and add the tunnel domain
-(keep the default package-manager list). Environment changes apply to sessions started afterwards.
+**B2. Allow the tunnel's domain**
 
-### 5. Tell the agent how to use it
+1. **Network access**: change it to **Custom**.
+2. **Allowed domains**: add `*.trycloudflare.com`. The wildcard means a new tunnel address needs no
+   change here.
+3. Keep **Also include default list of common package managers** ticked, or package installs in your
+   sessions stop working.
+4. Click **Save changes**.
 
-Paste this into the agent's instructions (for example a `CLAUDE.md` in your repository):
+**B3. Add the token as a network secret**
+
+A network secret makes Claude Code's proxy add your token to requests for you, so the token never
+enters the cloud session where the agent or its tools could read or leak it.
+
+1. Open **Edit cloud environment** again. Under **Network secrets**, click **Add secret**.
+2. Fill in the form:
+
+   | Field | Value |
+   |---|---|
+   | Name | `browser-bridge` |
+   | Secret type | `Bearer` |
+   | Allowed websites | your tunnel address **without** `https://`, e.g. `beta-marco-queue-flying.trycloudflare.com` |
+   | Path prefixes | leave empty |
+   | Custom header: Name | `Authorization` |
+   | Custom header: Prefix | `Bearer` |
+   | Custom header: Value | the contents of `.token` (run `cat .token` and copy it) |
+
+3. Click **Add**, then **Save changes**.
+
+Watch for these mistakes:
+
+- **Header name must be `Authorization`**, not `Authentication`.
+- **Clear the Value field before pasting.** Browsers sometimes auto-fill a saved password into it.
+- **Do not use a wildcard in Allowed websites.** With `*.trycloudflare.com` the proxy would send your
+  token to every trycloudflare address the agent visits, including tunnels run by strangers. Use the
+  exact address.
+
+**B4. Tell the agent where the browser is**
+
+Paste this into the agent's instructions, for example a `CLAUDE.md` in your repository, and replace
+the address:
 
 ```markdown
 ## Browser
-A browser on the user's machine is reachable at $BRIDGE_URL. Every request needs
-`Authorization: Bearer $BRIDGE_TOKEN` and `X-Bridge-Session: <a short name unique to this session>`.
+A browser on the user's machine is reachable at https://<your-tunnel-address>.
+The network proxy adds the Authorization header automatically; do not send one.
+Send `X-Bridge-Session: <a short name unique to this session>` on every request.
 POST /goto {"url"}, GET /text, GET /links, POST /click {"selector"}, POST /fill {"selector","value"},
 POST /press {"key"}, POST /back, GET /screenshot. When done: DELETE /session.
 Prefer /text and /links over screenshots. If a page shows a login or CAPTCHA, ask the user to
 complete it in the bridge window, then continue.
 ```
 
-A shell helper for the agent side:
+Or just give the address to the agent in your message.
+
+### C. Check that it works
+
+Ask the agent to run:
 
 ```bash
-br() { curl -sS -H "Authorization: Bearer $BRIDGE_TOKEN" -H "X-Bridge-Session: ${BR_SESSION:-default}" \
-            -H "Content-Type: application/json" "$BRIDGE_URL$@"; }
+curl -sS -H "X-Bridge-Session: test" https://<your-tunnel-address>/sessions
+curl -sS -H "X-Bridge-Session: test" -H "Content-Type: application/json" \
+     -d '{"url":"https://example.com"}' https://<your-tunnel-address>/goto
+```
+
+The first should return `{"sessions":{...}}` and the second `"title":"Example Domain"`. A new tab
+with example.com appears in the bridge window. If not, see [Troubleshooting](#troubleshooting).
+
+### When the tunnel address changes
+
+Every `cloudflared` restart gives a new address. Then:
+
+1. In **Edit cloud environment → Network secrets**, edit `browser-bridge` and replace the address in
+   **Allowed websites**.
+2. Give the agent the new address.
+
+The allowlist from B2 already covers it. For an address that never changes, use a
+[named tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
+on a domain you own.
+
+### Stop
+
+Press `Ctrl+C` in both terminals. The tunnel address stops working immediately. To also wipe
+everything the bridge's browser stored, including sign-ins: `rm -rf ~/.browser-bridge-profile`.
+
+### Other cloud agents
+
+Any agent that can make HTTPS requests works. It needs:
+
+1. Its network allowlist to include your tunnel address.
+2. The token, ideally injected by its platform as an `Authorization: Bearer <token>` header. If the
+   platform can't inject headers, store the token as a secret environment variable such as
+   `BRIDGE_TOKEN` and have the agent send the header itself.
+
+A shell helper that works either way:
+
+```bash
+br() {
+  local auth=()
+  [ -n "$BRIDGE_TOKEN" ] && auth=(-H "Authorization: Bearer $BRIDGE_TOKEN")
+  curl -sS "${auth[@]}" -H "X-Bridge-Session: ${BR_SESSION:-default}" \
+       -H "Content-Type: application/json" "$BRIDGE_URL$@"
+}
+BRIDGE_URL=https://<your-tunnel-address>
 br /goto -d '{"url":"https://example.com"}'
 br /text
 ```
@@ -155,8 +261,9 @@ Requests within one session run one at a time. Different sessions run concurrent
 Read this before exposing the bridge.
 
 - **The token is the only lock.** Whoever holds it controls the bridge's browser and every site
-  signed in inside it. Keep it in `.token` and in the agent's secret settings only. Rotate it by
-  generating a new one and updating both.
+  signed in inside it. Keep it in `.token` and in your platform's secret settings only, scoped to
+  your exact tunnel address. Rotate it by generating a new `.token`, restarting the bridge, and
+  updating the secret.
 - **Sign in only to what the task needs.** Not your bank, not your primary email.
 - **The browser is isolated from your other browsers**, not from your network identity. Sites see
   your IP address.
@@ -169,12 +276,22 @@ Read this before exposing the bridge.
 
 Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
 
+## Troubleshooting
+
+| What the agent sees | Cause | Fix |
+|---|---|---|
+| `CONNECT tunnel failed, response 403` | The cloud environment blocks the domain | B2: add `*.trycloudflare.com` to Allowed domains and save |
+| `{"detail":"missing or wrong bearer token"}` (401) | The token isn't arriving or doesn't match | B3: check the header name is `Authorization`, the prefix is `Bearer`, Allowed websites is the current tunnel address, and the value matches `.token`. If you started the bridge without `BRIDGE_TOKEN`, it made up a new token; restart it with `BRIDGE_TOKEN=$(cat .token)` |
+| Cloudflare error page, `502` or `530` | The bridge or the tunnel is not running | Check both terminals from A4 and A5 are still running |
+| It worked, then 401 or 403 after a restart | The tunnel address changed | [When the tunnel address changes](#when-the-tunnel-address-changes) |
+| `ERR_BLOCKED_BY_CLIENT` (422) | The page is on a private or local address | Intended. To allow it, start the bridge with `BRIDGE_ALLOW_PRIVATE_NETWORKS=1` |
+| `Timeout ... exceeded` (422) | The selector matched nothing within 15s | Check the selector against `/text` or `/screenshot` |
+| `at most 8 sessions can be open` (429) | Too many tabs | `DELETE /session` for finished sessions, or close tabs in the window |
+
 ## Limitations
 
-- A Cloudflare quick tunnel gets a new URL every time `cloudflared` restarts, so the agent's
-  environment and allowlist need updating each time. For a stable URL, use a
-  [named tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
-  on a domain you control.
+- A Cloudflare quick tunnel gets a new address every time `cloudflared` restarts, so the network
+  secret needs updating each time (see above). Quick tunnels also come with no uptime guarantee.
 - Links that open a new window (`target="_blank"`) open outside the session's tab and are not
   tracked. Use `/goto` with the link's `href` from `/links` instead.
 - No file uploads or downloads, no multi-tab control within a session.
