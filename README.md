@@ -34,6 +34,12 @@ There are three parts: **A** runs the bridge on your machine, **B** lets your cl
 
 You need Python 3.10+ and about 300 MB of disk space for the browser.
 
+> **With Claude Code on this machine**, you can skip the manual steps below: after `git clone`, run
+> `claude` in the repository and ask it to *start the bridge* (or type `/bridge`). The project skill
+> in `.claude/skills/bridge/` runs A1 to A5, keeps both processes in the background, and prints your
+> tunnel address. Ask it to *stop the bridge* when you are done. Installing `cloudflared` with
+> `sudo` (A2) is left to you.
+
 **A1. Install the bridge (once)**
 
 ```bash
