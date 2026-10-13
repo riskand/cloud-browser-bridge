@@ -5,8 +5,9 @@ Standard library only, so it runs before the virtual environment exists:
     python3 .claude/skills/bridge/scripts/bridge.py setup|start|status|stop
 
 Both processes run detached from the caller and outlive it. Pid files and logs go to `.bridge/`,
-and so does `browser-bridge.zip`: the cloud-session skill with the current tunnel address filled
-in, rewritten on every start and removed on stop. It never contains the token.
+and so does `browser-bridge.zip`: the cloud-session instructions with the current tunnel address
+filled in, to attach to a cloud session. It is rewritten on every start, removed on stop, and never
+contains the token.
 """
 
 from __future__ import annotations  # an older system Python reaches pip's version error
@@ -141,7 +142,7 @@ def _tunnel_address() -> str | None:
 
 
 def _write_cloud_skill(address: str) -> None:
-    """Zip the cloud-session skill with `address` filled in, ready to upload."""
+    """Zip the cloud-session instructions with `address` filled in, ready to attach."""
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     note = (
         f"\n> **Tunnel address: `{address}`**, written when the bridge started ({stamp}).\n"

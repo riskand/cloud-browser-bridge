@@ -106,20 +106,16 @@ The address changes every time you restart `cloudflared`. See
 Both settings live in your cloud environment and apply to every session that uses it, including
 sessions already running.
 
-> **Let Claude guide you.** [`skills/browser-bridge`](skills/browser-bridge/SKILL.md) is a skill for
-> the cloud session. It checks the connection, walks you through B2 and B3 one step at a time based
-> on the error it sees, and then teaches the agent the API, so B4 is not needed. Add it in either
-> of two ways:
+> **Let Claude guide you.** Every time the local `bridge` skill starts the bridge, it writes
+> `.bridge/browser-bridge.zip`: the instructions in [`skills/browser-bridge`](skills/browser-bridge/SKILL.md)
+> with your current tunnel address filled in. It never contains the token, which stays in the
+> network secret (B3).
 >
-> - Copy the `skills/browser-bridge` folder into `.claude/skills/` of the repository you work on in
->   the cloud. Every session of that repository then has it.
-> - Upload `.bridge/browser-bridge.zip` as a skill in your claude.ai settings, so it follows you to
->   every session. The local `bridge` skill writes it on every start with your current tunnel address
->   filled in, so upload it again after each restart; the new upload replaces the old one. It never
->   contains the token: that stays in the network secret (B3).
->
-> Then open a new cloud session and prompt *set up browser*. It checks the connection,
-> walks you through any missing setting, and confirms with a test page.
+> Attach that zip to the first message of the cloud session that should use the browser, and prompt
+> *set up browser with the attached zip*. The agent checks the connection, walks you through B2 and
+> B3 one step at a time based on the error it sees, confirms with a test page, and then knows the
+> API, so B4 is not needed. Attach it again in each new session. Don't install it as a skill: it is
+> meant for the sessions you attach it to, not for every session.
 
 **B1. Open the environment settings**
 
@@ -201,8 +197,8 @@ Every `cloudflared` restart gives a new address. Then:
 
 1. In **Edit cloud environment → Network secrets**, edit `browser-bridge` and replace the address in
    **Allowed websites**.
-2. Give the agent the new address. If you use the uploaded skill, upload the new
-   `.bridge/browser-bridge.zip` instead; it replaces the old one.
+2. Give the agent the new address, or attach the new `.bridge/browser-bridge.zip` to the session
+   instead.
 
 The allowlist from B2 already covers it. For an address that never changes, use a
 [named tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
