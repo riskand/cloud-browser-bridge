@@ -40,6 +40,9 @@ Both processes keep running after Claude Code exits. Logs and pid files are in `
    - The token stays with the user. They keep it in the `browser-bridge` network secret, copying the
      value from `.token` in their own terminal. With a new address, they only update the secret's
      **Allowed websites** to it; the value stays the same.
+   - Then they open a **new** cloud session (a session loads skills when it starts) and prompt
+     *set up the browser bridge*. The skill checks the connection, walks them through any missing
+     setting, and confirms with a test page.
 
 ## Rules
 
