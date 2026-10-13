@@ -16,7 +16,7 @@ python3 .claude/skills/bridge/scripts/bridge.py <command>
 
 | Command | What it does |
 |---|---|
-| `setup` | A1: creates `.venv`, installs the bridge and Playwright's Chromium (about 300 MB the first time). A3: creates `.token` if missing. A2: checks that `cloudflared` is installed. Safe to re-run. |
+| `setup` | A1: creates `.venv` and installs the bridge. It drives the Google Chrome already on this machine; with `BRIDGE_BROWSER=chromium` it downloads Playwright's Chromium instead (about 300 MB). A3: creates `.token` if missing. A2: checks that `cloudflared` is installed. Safe to re-run. |
 | `start` | A4 and A5: starts the bridge and the tunnel in the background, waits until both are up and prints the tunnel address. Writes `.bridge/browser-bridge.zip`, the cloud-session instructions with that address filled in. Leaves anything already running alone. |
 | `status` | Shows which of the two is running and the current tunnel address. |
 | `stop` | Stops the tunnel, then the bridge, and deletes the zip. |
@@ -28,17 +28,26 @@ Both processes keep running after Claude Code exits. Logs and pid files are in `
 1. For a restart, run `stop` first. Otherwise go straight to `start`: it leaves running processes
    alone and still rewrites the zip.
 2. Run `start`.
-   - If it says the project is not set up yet, tell the user that `setup` downloads about 300 MB and
-     ask before running it. Then run `start` again.
+   - If it says the project is not set up yet, run `setup` (ask first if `BRIDGE_BROWSER=chromium`,
+     which downloads about 300 MB), then `start` again.
    - If `cloudflared` is missing: on macOS with Homebrew, offer to run `brew install cloudflared`.
      Otherwise installing it needs `sudo`, so give the user the commands from README step A2 to run
      in their own terminal.
-3. Reply with exactly this, filling in the address and the zip's full path, and nothing more:
+3. Reply with exactly one of these, filling in the address and the zip's full path, and nothing
+   more. If `start` printed `new tunnel address`:
 
-   > Bridge running at `<tunnel address>`.
+   > Bridge running at `<tunnel address>` (new address). Chrome is minimized in your taskbar.
    >
-   > Next, in the cloud session: attach `<full path of .bridge/browser-bridge.zip>` and say
-   > **set up browser with the attached zip**. It walks you through the rest one step at a time.
+   > - **New cloud session:** attach `<full path of .bridge/browser-bridge.zip>` and say
+   >   **set up browser with the attached zip**.
+   > - **Session that already used the bridge:** attach the same zip there and say
+   >   **reset browser with the attached zip**.
+
+   Otherwise the address is unchanged:
+
+   > Bridge already running at `<tunnel address>`. Sessions already set up keep working.
+   > For a new cloud session, attach `<full path of .bridge/browser-bridge.zip>` and say
+   > **set up browser with the attached zip**.
 
    Background, only if the user asks: the zip holds the cloud-session instructions with this address
    filled in, everything needed to connect except the token. It is attached to each cloud session,
@@ -56,5 +65,9 @@ Both processes keep running after Claude Code exits. Logs and pid files are in `
 - If `start` fails, it prints the end of the relevant log. Diagnose from that:
   - Something else is already using the port, often a bridge started by hand: ask the user to stop it,
     or start with a different `BRIDGE_PORT`.
+  - `Chromium distribution 'chrome' is not found`: Google Chrome is not installed. Ask the user to
+    install it the usual way (google.com/chrome), or to use Playwright's Chromium instead: `stop`,
+    then `BRIDGE_BROWSER=chromium` in front of both `setup` and `start`. Don't run
+    `playwright install chrome`: it replaces the system's Chrome and needs `sudo`.
   - On Linux, Chromium may be missing system libraries. The user can install them with
     `sudo .venv/bin/python -m playwright install-deps chromium`.

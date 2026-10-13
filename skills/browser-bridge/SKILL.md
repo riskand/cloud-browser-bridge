@@ -1,12 +1,12 @@
 ---
 name: browser-bridge
-description: Use a browser on the user's own machine through cloud-browser-bridge, a small HTTPS API reached through a Cloudflare tunnel. Use when the user asks to set up, connect to or check the browser bridge (for example "set up browser" with this file attached), or to browse, open or read a web page, click, fill in a form or take a screenshot "in my browser" or "with the bridge", or when a page needs a real browser (JavaScript, a sign-in). Also use when requests to a trycloudflare.com address fail with 401, 403, 502 or 530.
+description: Use a browser on the user's own machine through cloud-browser-bridge, a small HTTPS API reached through a Cloudflare tunnel. Use when the user asks to set up, connect to or check the browser bridge (for example "set up browser" or "reset browser" with this file attached), or to browse, open or read a web page, click, fill in a form or take a screenshot "in my browser" or "with the bridge", or when a page needs a real browser (JavaScript, a sign-in). Also use when requests to a trycloudflare.com address fail with 401, 403, 502 or 530.
 ---
 
 # Browser bridge (cloud session)
 
 The user runs [cloud-browser-bridge](https://github.com/riskand/cloud-browser-bridge) on their own
-machine: an isolated Chromium window behind a token-protected HTTP API, published through a
+machine: an isolated Google Chrome window behind a token-protected HTTP API, published through a
 Cloudflare quick tunnel at an address like `https://<four-words>.trycloudflare.com`. This session
 reaches it with `curl`.
 
@@ -34,7 +34,8 @@ The user follows along in a chat. Guide, don't report:
 
 Always start with sections 1 and 2. Then:
 
-- If the user asked to set up or check the bridge, finish with section 4 once the check passes.
+- If the user asked to set up, reset or check the bridge, finish with section 4 once the check
+  passes.
 - Otherwise, once the check passes, go straight to section 5 and do the task.
 - Section 3 is only for fixing a failed check.
 
@@ -42,6 +43,8 @@ Always start with sections 1 and 2. Then:
 
 - If a **Tunnel address** note sits under the title above, this copy was generated when the bridge
   started, and the address is already filled in below. Use it.
+- A zip attached later in the session (usually with **reset browser**) was written by a newer start.
+  From then on its address replaces the old one everywhere.
 - Otherwise look in your system context for the list of hosts with proxy-injected credentials ("services
   already connected for this conversation"). A `*.trycloudflare.com` host injected with the secret
   `browser-bridge` is the tunnel address. That list is fixed when the session starts, so it can be
@@ -84,7 +87,8 @@ Steps that open the environment settings use this message:
 
    If they don't have the folder: `git clone https://github.com/riskand/cloud-browser-bridge.git`
    first. The local skill installs everything else.
-2. > **Step 2 of 2:** Attach the new `.bridge/browser-bridge.zip` here.
+2. > **Step 2 of 2:** Attach the new `.bridge/browser-bridge.zip` here and say **reset browser with
+   > the attached zip**.
 
 Then start over at section 1 with the new file. A new address almost always needs path 3C next.
 
@@ -187,7 +191,7 @@ Working rules:
   `-o <file>.png` and open the file to look at it.
 - Links that open a new window are not followed. Use `/goto` with the `href` from `/links`.
 - On a login page, a CAPTCHA or a cookie wall you cannot get past, ask the user to deal with it in the
-  bridge window, then carry on.
+  bridge's Chrome window (it starts minimized in their taskbar), then carry on.
 - Ask before submitting forms that send, buy, post or change anything for the user.
 - When the task is done, close the tab: `curl -sS -X DELETE -H 'X-Bridge-Session: <name>'
   https://<address>/session`.
@@ -197,4 +201,4 @@ Working rules:
 | 422 `Timeout ... exceeded` | The selector matched nothing within 15 seconds. Check it against `/text` |
 | 422 `ERR_BLOCKED_BY_CLIENT` | The page is on a private or local address, which the bridge blocks by default |
 | 429 | Too many open tabs. Close finished sessions with `DELETE /session` |
-| 401, 403, 502, 530 | The connection broke. Go back to section 2 |
+| 401, 403, 502, 530 | The connection broke, usually because the bridge restarted. Run section 2 quietly; if it fails, send: "The bridge seems to have restarted. Attach the new zip from your computer and say **reset browser with the attached zip**." |

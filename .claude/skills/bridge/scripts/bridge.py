@@ -183,13 +183,16 @@ def start() -> None:
             sys.exit(f"error: something else already listens on {LOCAL_URL}")
         env = {**os.environ, "BRIDGE_TOKEN": TOKEN_FILE.read_text().strip()}
         BRIDGE.start([str(BRIDGE_EXE)], lambda: _local_status() == 401, env)
-    if TUNNEL.pid() is None:
+    new_address = TUNNEL.pid() is None
+    if new_address:
         TUNNEL.start(
             ["cloudflared", "tunnel", "--url", LOCAL_URL], lambda: _tunnel_address() is not None
         )
     if address := _tunnel_address():
         _write_cloud_skill(address)
     status()
+    if new_address:
+        print("new tunnel address: cloud sessions that used the old one need the new zip")
 
 
 def status() -> None:
