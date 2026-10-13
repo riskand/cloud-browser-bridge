@@ -52,7 +52,8 @@ Both processes keep running after Claude Code exits. Logs and pid files are in `
    Background, only if the user asks: the zip holds the cloud-session instructions with this address
    filled in, everything needed to connect except the token. It is attached to each cloud session,
    not installed as a skill. The token stays in the user's `browser-bridge` network secret; after a
-   restart only the secret's **Allowed websites** changes, and the cloud session guides that.
+   restart the secret is deleted and added again for the new address (secrets can't be edited),
+   and the cloud session guides that.
 
 ## Rules
 

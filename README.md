@@ -197,8 +197,8 @@ with example.com appears in the bridge window. If not, see [Troubleshooting](#tr
 
 Every `cloudflared` restart gives a new address. Then:
 
-1. In **Edit cloud environment → Network secrets**, edit `browser-bridge` and replace the address in
-   **Allowed websites**.
+1. In **Edit cloud environment → Network secrets**, delete `browser-bridge` and add it again as in B3
+   with the new address. Secrets can't be edited.
 2. Give the agent the new address, or attach the new `.bridge/browser-bridge.zip` to the session and
    say *reset browser with the attached zip*.
 
@@ -284,7 +284,7 @@ Read this before exposing the bridge.
 - **The token is the only lock.** Whoever holds it controls the bridge's browser and every site
   signed in inside it. Keep it in `.token` and in your platform's secret settings only, scoped to
   your exact tunnel address. Rotate it by generating a new `.token`, restarting the bridge, and
-  updating the secret.
+  replacing the secret (delete it and add it again).
 - **Sign in only to what the task needs.** Not your bank, not your primary email.
 - **The browser is isolated from your other browsers**, not from your network identity. Sites see
   your IP address.
@@ -302,7 +302,7 @@ Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
 | What the agent sees | Cause | Fix |
 |---|---|---|
 | `CONNECT tunnel failed, response 403` | The cloud environment blocks the domain | B2: add `*.trycloudflare.com` to Allowed domains and save |
-| `{"detail":"missing or wrong bearer token"}` (401) | The token isn't arriving or doesn't match | B3: check the header name is `Authorization`, the prefix is `Bearer`, Allowed websites is the current tunnel address, and the value matches `.token`. If you started the bridge without `BRIDGE_TOKEN`, it made up a new token; restart it with `BRIDGE_TOKEN=$(cat .token)` |
+| `{"detail":"missing or wrong bearer token"}` (401) | The token isn't arriving or doesn't match | B3: delete the secret and add it again, checking that the header name is `Authorization`, the prefix is `Bearer`, Allowed websites is the current tunnel address, and the value matches `.token`. If you started the bridge without `BRIDGE_TOKEN`, it made up a new token; restart it with `BRIDGE_TOKEN=$(cat .token)` |
 | Cloudflare error page, `502` or `530` | The bridge or the tunnel is not running | Check both terminals from A4 and A5 are still running |
 | It worked, then 401 or 403 after a restart | The tunnel address changed | [When the tunnel address changes](#when-the-tunnel-address-changes) |
 | `ERR_BLOCKED_BY_CLIENT` (422) | The page is on a private or local address | Intended. To allow it, start the bridge with `BRIDGE_ALLOW_PRIVATE_NETWORKS=1` |
@@ -312,7 +312,7 @@ Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
 ## Limitations
 
 - A Cloudflare quick tunnel gets a new address every time `cloudflared` restarts, so the network
-  secret needs updating each time (see above). Quick tunnels also come with no uptime guarantee.
+  secret needs replacing each time (see above). Quick tunnels also come with no uptime guarantee.
 - Links that open a new window (`target="_blank"`) open outside the session's tab and are not
   tracked. Use `/goto` with the link's `href` from `/links` instead.
 - No file uploads or downloads, no multi-tab control within a session.
