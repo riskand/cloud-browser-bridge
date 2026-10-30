@@ -100,6 +100,15 @@ After a few seconds it prints a box containing your address, for example
 address**. Leave this terminal running too. Warnings about `ICMP proxy` or `ping_group_range` are
 harmless.
 
+Then, in a third terminal, write the zip that Part B attaches to the cloud session, using that
+address:
+
+```bash
+python3 .claude/skills/bridge/scripts/bridge.py zip <your tunnel address>
+```
+
+It prints the zip's path, `.bridge/browser-bridge.zip`.
+
 The address changes every time you restart `cloudflared`. See
 [When the tunnel address changes](#when-the-tunnel-address-changes).
 
@@ -109,7 +118,7 @@ Both settings live in your cloud environment and apply to every session that use
 sessions already running.
 
 > **Let Claude guide you.** Every time the local `bridge` skill starts the bridge, it writes
-> `.bridge/browser-bridge.zip`: the instructions in [`skills/browser-bridge`](skills/browser-bridge/SKILL.md)
+> `.bridge/browser-bridge.zip` (after a manual start, the `zip` command at the end of A5 writes it): the instructions in [`skills/browser-bridge`](skills/browser-bridge/SKILL.md)
 > with your current tunnel address filled in. It never contains the token, which stays in the
 > network secret (B3).
 >
@@ -200,7 +209,8 @@ Every `cloudflared` restart gives a new address. Then:
 1. In **Edit cloud environment → Network secrets**, delete `browser-bridge` and add it again as in B3
    with the new address. Secrets can't be edited.
 2. Give the agent the new address, or attach the new `.bridge/browser-bridge.zip` to the session and
-   say *reset browser with the attached zip*.
+   say *reset browser with the attached zip*. After a manual restart, write the new zip first with
+   the `zip` command from A5.
 
 The allowlist from B2 already covers it. For an address that never changes, use a
 [named tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)

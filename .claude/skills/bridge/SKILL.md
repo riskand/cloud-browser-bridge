@@ -20,6 +20,7 @@ python3 .claude/skills/bridge/scripts/bridge.py <command>
 | `start` | A4 and A5: starts the bridge and the tunnel in the background, waits until both are up and prints the tunnel address. Writes `.bridge/browser-bridge.zip`, the cloud-session instructions with that address filled in. Leaves anything already running alone. |
 | `status` | Shows which of the two is running and the current tunnel address. |
 | `stop` | Stops the tunnel, then the bridge, and deletes the zip. |
+| `zip <address>` | Writes the zip for a bridge and tunnel started by hand (README A4 and A5), which `status` reports as stopped. The address is the one `cloudflared` printed. |
 
 Both processes keep running after Claude Code exits. Logs and pid files are in `.bridge/`.
 

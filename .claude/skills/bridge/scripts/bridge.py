@@ -1,13 +1,16 @@
+# cloud-browser-bridge/.claude/skills/bridge/scripts/bridge.py
 """Set up, start, stop and check the bridge and its Cloudflare quick tunnel (README Part A).
 
 Standard library only, so it runs before the virtual environment exists:
 
     python3 .claude/skills/bridge/scripts/bridge.py setup|start|status|stop
+    python3 .claude/skills/bridge/scripts/bridge.py zip <tunnel address>
 
 Both processes run detached from the caller and outlive it. Pid files and logs go to `.bridge/`,
 and so does `browser-bridge.zip`: the cloud-session instructions with the current tunnel address
 filled in, to attach to a cloud session. It is rewritten on every start, removed on stop, and never
-contains the token.
+contains the token. After starting the bridge and the tunnel by hand (README A4 and A5), `zip` writes
+it for the address `cloudflared` printed.
 """
 
 from __future__ import annotations  # an older system Python reaches pip's version error
@@ -203,6 +206,16 @@ def status() -> None:
     print(f"cloud skill: {CLOUD_SKILL_ZIP if CLOUD_SKILL_ZIP.exists() else '-'}")
 
 
+def zip_for(address: str) -> None:
+    """Write the zip for a tunnel started by hand, whose address this script cannot see."""
+    if not address.startswith("https://"):
+        address = f"https://{address}"
+    if not TUNNEL_ADDRESS.fullmatch(address):
+        sys.exit(f"error: {address} is not a quick tunnel address (https://<words>.trycloudflare.com)")
+    _write_cloud_skill(address)
+    print(f"cloud skill: {CLOUD_SKILL_ZIP}")
+
+
 def stop() -> None:
     TUNNEL.stop()
     BRIDGE.stop()
@@ -215,9 +228,15 @@ COMMANDS = {"setup": setup, "start": start, "status": status, "stop": stop}
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("command", choices=COMMANDS)
+    commands = parser.add_subparsers(dest="command", required=True)
+    for name, command in COMMANDS.items():
+        commands.add_parser(name).set_defaults(run=command)
+    zip_parser = commands.add_parser("zip", help="write the zip for a tunnel started by hand")
+    zip_parser.add_argument("address", help="the address cloudflared printed")
+    zip_parser.set_defaults(run=lambda: zip_for(args.address))
+    args = parser.parse_args()
     try:
-        COMMANDS[parser.parse_args().command]()
+        args.run()
     except subprocess.CalledProcessError as exc:
         sys.exit(f"error: `{' '.join(map(str, exc.cmd))}` failed with exit code {exc.returncode}")
 
