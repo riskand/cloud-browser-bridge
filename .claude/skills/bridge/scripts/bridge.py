@@ -9,8 +9,8 @@ Standard library only, so it runs before the virtual environment exists:
 Both processes run detached from the caller and outlive it. Pid files and logs go to `.bridge/`,
 and so does `browser-bridge.zip`: the cloud-session instructions with the current tunnel address
 filled in, to attach to a cloud session. It is rewritten on every start, removed on stop, and never
-contains the token. After starting the bridge and the tunnel by hand (README A4 and A5), `zip` writes
-it for the address `cloudflared` printed.
+contains the token. After starting the bridge and the tunnel by hand (README A4 and A5), `zip`
+writes it for the address `cloudflared` printed.
 """
 
 from __future__ import annotations  # an older system Python reaches pip's version error
@@ -211,7 +211,9 @@ def zip_for(address: str) -> None:
     if not address.startswith("https://"):
         address = f"https://{address}"
     if not TUNNEL_ADDRESS.fullmatch(address):
-        sys.exit(f"error: {address} is not a quick tunnel address (https://<words>.trycloudflare.com)")
+        sys.exit(
+            f"error: {address} is not a quick tunnel address (https://<words>.trycloudflare.com)"
+        )
     _write_cloud_skill(address)
     print(f"cloud skill: {CLOUD_SKILL_ZIP}")
 
