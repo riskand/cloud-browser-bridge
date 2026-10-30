@@ -109,7 +109,7 @@ Both settings live in your cloud environment and apply to every session that use
 sessions already running.
 
 > **Let Claude guide you.** Every time the local `bridge` skill starts the bridge, it writes
-> `.bridge/browser-bridge.zip`: the instructions in [`skills/browser-bridge`](skills/browser-bridge/SKILL.md)
+> `browser-bridge.zip` in the repository folder: the instructions in [`skills/browser-bridge`](skills/browser-bridge/SKILL.md)
 > with your current tunnel address filled in. It never contains the token, which stays in the
 > network secret (B3).
 >
@@ -199,7 +199,7 @@ Every `cloudflared` restart gives a new address. Then:
 
 1. In **Edit cloud environment → Network secrets**, delete `browser-bridge` and add it again as in B3
    with the new address. Secrets can't be edited.
-2. Give the agent the new address, or attach the new `.bridge/browser-bridge.zip` to the session and
+2. Give the agent the new address, or attach the new `browser-bridge.zip` to the session and
    say *reset browser with the attached zip*.
 
 The allowlist from B2 already covers it. For an address that never changes, use a

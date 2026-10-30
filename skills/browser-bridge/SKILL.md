@@ -51,7 +51,7 @@ Always start with sections 1 and 2. Then:
   out of date.
 - If it is not there, or the check below says it is out of date, ask the user for the current
   address. On their machine it is printed by `cloudflared` or by the repository's `bridge` skill,
-  which also writes `.bridge/browser-bridge.zip`: these instructions with the address filled in,
+  which also writes `browser-bridge.zip` in the repository folder: these instructions with the address filled in,
   for the user to attach to the session.
 
 ## 2. Check the connection
@@ -87,7 +87,7 @@ Steps that open the environment settings use this message:
 
    If they don't have the folder: `git clone https://github.com/riskand/cloud-browser-bridge.git`
    first. The local skill installs everything else.
-2. > **Step 2 of 2:** Attach the new `.bridge/browser-bridge.zip` here and say **reset browser with
+2. > **Step 2 of 2:** Attach the new `browser-bridge.zip` here and say **reset browser with
    > the attached zip**.
 
 Then start over at section 1 with the new file. A new address almost always needs path 3C next.

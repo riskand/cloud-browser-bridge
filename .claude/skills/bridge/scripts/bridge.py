@@ -4,10 +4,10 @@ Standard library only, so it runs before the virtual environment exists:
 
     python3 .claude/skills/bridge/scripts/bridge.py setup|start|status|stop
 
-Both processes run detached from the caller and outlive it. Pid files and logs go to `.bridge/`,
-and so does `browser-bridge.zip`: the cloud-session instructions with the current tunnel address
-filled in, to attach to a cloud session. It is rewritten on every start, removed on stop, and never
-contains the token.
+Both processes run detached from the caller and outlive it. Pid files and logs go to `.bridge/`.
+`browser-bridge.zip` goes to the repository root, where upload dialogs show it: the cloud-session
+instructions with the current tunnel address filled in, to attach to a cloud session. It is
+rewritten on every start, removed on stop, and never contains the token.
 """
 
 from __future__ import annotations  # an older system Python reaches pip's version error
@@ -36,7 +36,7 @@ BRIDGE_EXE = BIN / "browser-bridge"
 TOKEN_FILE = ROOT / ".token"
 STATE_DIR = ROOT / ".bridge"
 CLOUD_SKILL = ROOT / "skills" / "browser-bridge" / "SKILL.md"
-CLOUD_SKILL_ZIP = STATE_DIR / "browser-bridge.zip"
+CLOUD_SKILL_ZIP = ROOT / "browser-bridge.zip"
 LOCAL_URL = f"http://127.0.0.1:{os.environ.get('BRIDGE_PORT', '8765')}"
 TUNNEL_ADDRESS = re.compile(r"https://[a-z0-9-]+\.trycloudflare\.com")
 START_TIMEOUT_S = 60
@@ -180,7 +180,11 @@ def start() -> None:
         sys.exit("error: cloudflared is not installed (README step A2)")
     if BRIDGE.pid() is None:
         if _local_status() is not None:
-            sys.exit(f"error: something else already listens on {LOCAL_URL}")
+            sys.exit(
+                f"error: something else already listens on {LOCAL_URL}. If it is a bridge "
+                "started by hand, stop it and its cloudflared, then run `start` again: only "
+                "`start` writes browser-bridge.zip."
+            )
         env = {**os.environ, "BRIDGE_TOKEN": TOKEN_FILE.read_text().strip()}
         BRIDGE.start([str(BRIDGE_EXE)], lambda: _local_status() == 401, env)
     new_address = TUNNEL.pid() is None

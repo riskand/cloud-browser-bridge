@@ -17,7 +17,7 @@ python3 .claude/skills/bridge/scripts/bridge.py <command>
 | Command | What it does |
 |---|---|
 | `setup` | A1: creates `.venv` and installs the bridge. It drives the Google Chrome already on this machine; with `BRIDGE_BROWSER=chromium` it downloads Playwright's Chromium instead (about 300 MB). A3: creates `.token` if missing. A2: checks that `cloudflared` is installed. Safe to re-run. |
-| `start` | A4 and A5: starts the bridge and the tunnel in the background, waits until both are up and prints the tunnel address. Writes `.bridge/browser-bridge.zip`, the cloud-session instructions with that address filled in. Leaves anything already running alone. |
+| `start` | A4 and A5: starts the bridge and the tunnel in the background, waits until both are up and prints the tunnel address. Writes `browser-bridge.zip` in the repository root, the cloud-session instructions with that address filled in. Leaves anything already running alone. |
 | `status` | Shows which of the two is running and the current tunnel address. |
 | `stop` | Stops the tunnel, then the bridge, and deletes the zip. |
 
@@ -38,7 +38,7 @@ Both processes keep running after Claude Code exits. Logs and pid files are in `
 
    > Bridge running at `<tunnel address>` (new address). Chrome is minimized in your taskbar.
    >
-   > - **New cloud session:** attach `<full path of .bridge/browser-bridge.zip>` and say
+   > - **New cloud session:** attach `<full path of browser-bridge.zip>` and say
    >   **set up browser with the attached zip**.
    > - **Session that already used the bridge:** attach the same zip there and say
    >   **reset browser with the attached zip**.
@@ -46,7 +46,7 @@ Both processes keep running after Claude Code exits. Logs and pid files are in `
    Otherwise the address is unchanged:
 
    > Bridge already running at `<tunnel address>`. Sessions already set up keep working.
-   > For a new cloud session, attach `<full path of .bridge/browser-bridge.zip>` and say
+   > For a new cloud session, attach `<full path of browser-bridge.zip>` and say
    > **set up browser with the attached zip**.
 
    Background, only if the user asks: the zip holds the cloud-session instructions with this address
@@ -64,8 +64,9 @@ Both processes keep running after Claude Code exits. Logs and pid files are in `
   `start`, for example `BRIDGE_HEADLESS=1 python3 .claude/skills/bridge/scripts/bridge.py start`.
   They take effect only on a fresh start, so run `stop` first if the bridge is already running.
 - If `start` fails, it prints the end of the relevant log. Diagnose from that:
-  - Something else is already using the port, often a bridge started by hand: ask the user to stop it,
-    or start with a different `BRIDGE_PORT`.
+  - Something else is already using the port, often a bridge started by hand (in a terminal or
+    `screen`): ask the user to stop it and its `cloudflared`, then run `start` again. Only `start`
+    writes the zip, so a bridge started by hand never has one.
   - `Chromium distribution 'chrome' is not found`: Google Chrome is not installed. Ask the user to
     install it the usual way (google.com/chrome), or to use Playwright's Chromium instead: `stop`,
     then `BRIDGE_BROWSER=chromium` in front of both `setup` and `start`. Don't run
